@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 return [
     'public_token' => env('SHOPIFY_PUBLIC_TOKEN'),
@@ -9,5 +9,3 @@ return [
     'api_version' => env('SHOPIFY_API_VERSION','2026-01'),
     'shop_domain' => env('SHOPIFY_SHOP_DOMAIN')
 ];
-
-?>
