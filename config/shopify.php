@@ -7,5 +7,7 @@ return [
     'api_key' => env('SHOPIFY_API_KEY'),
     'api_secret_key' => env('SHOPIFY_API_SECRET'),
     'api_version' => env('SHOPIFY_API_VERSION','2026-01'),
-    'shop_domain' => env('SHOPIFY_SHOP_DOMAIN')
+    'shop_domain' => env('SHOPIFY_SHOP_DOMAIN'),
+    'shop_url' => env('SHOPIFY_SHOP_URL'),
+    'app_url' => env('SHOPIFY_APP_URL')
 ];

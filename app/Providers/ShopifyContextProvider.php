@@ -14,7 +14,7 @@ class ShopifyContextProvider extends ServiceProvider
             apiKey: config('shopify.api_key'),
             apiSecretKey: config('shopify.api_secret_key'),
             scopes: ['read_products', 'read_inventory', 'read_orders'],
-            hostName: config('shopify.shop_domain'),
+            hostName: config('shopify.app_url'),
             sessionStorage: new FileSessionStorage(storage_path('shopify_sessions')),
             apiVersion: config('shopify.api_version'),
             isEmbeddedApp: false,
