@@ -5,11 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use \App\Services\Shopify\ProductSyncService;
-use \App\Services\Shopify\ShopifyAdminService;
+use App\Jobs\SyncProducts;
 
 #[Signature('app:sync-shopify')]
-#[Description('Command description')]
+#[Description('Avvia il job di allineamento prodotto BE - Shopify')]
 class SyncShopify extends Command
 {
     /**
@@ -17,7 +16,7 @@ class SyncShopify extends Command
      */
     public function handle()
     {
-        $shopifyInstance = new ProductSyncService(new ShopifyAdminService());
-        $shopifyInstance->syncAll();
+        SyncProducts::dispatch();
+        $this->info('Job di sincronizzazione BE - Shopify avviato');
     }
 }
