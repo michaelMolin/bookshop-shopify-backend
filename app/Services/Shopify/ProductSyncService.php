@@ -7,12 +7,11 @@ use App\Models\Category;
 use App\Models\SyncLog;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use Throwable;
 
-class ProductSyncService
+readonly class ProductSyncService
 {
     public function __construct(
-        private readonly ShopifyAdminService $admin,
+        private ShopifyAdminService $admin,
     ) {}
 
 
@@ -23,6 +22,7 @@ class ProductSyncService
             'status' => 'running',
             'started_at' => now(),
         ]);
+        $logStartedAt = now();
 
         $processed = 0;
         $failed = 0;
@@ -58,7 +58,7 @@ class ProductSyncService
                 'products_processed' => $processed,
                 'products_failed' => $failed,
                 'finished_at' => now(),
-                'duration_seconds' => now()->diffInSeconds($log->started_at),
+                'duration_seconds' => $logStartedAt->diffInSeconds(now()),
             ]);
         } catch (Throwable $e) {
             $log->update([
@@ -67,7 +67,7 @@ class ProductSyncService
                 'products_failed' => $failed,
                 'error_message' => $e->getMessage(),
                 'finished_at' => now(),
-                'duration_seconds' => now()->diffInSeconds($log->started_at),
+                'duration_seconds' => $logStartedAt->diffInSeconds(now()),
             ]);
             throw $e;
         }
@@ -76,25 +76,23 @@ class ProductSyncService
     }
 
     /**
-     * Mappa e salva un singolo prodotto Shopify sul modello locale.
+     * Mappa e salva un singolo prodotto Shopify
      */
     private function syncOne(array $node): void
     {
-        // L'id Shopify arriva come GID: "gid://shopify/Product/123456"
+        // L'id Shopify arriva come GID, esempio: "gid://shopify/Product/123456"
         $shopifyId = (int) Str::afterLast($node['id'], '/');
 
-        // Prima variante (per price, sku, inventory)
-        $variant = $node['variants']['edges'][0]['node'] ?? [];
-
+        $shopifyProduct = $node['variants']['edges'][0]['node'] ?? [];
         $product = Product::updateOrCreate(
-            ['shopify_id' => $shopifyId],
+            ['id_shopify' => $shopifyId],
             [
                 'title' => $node['title'],
                 'slug' => $node['handle'],
                 'publisher' => $node['vendor'] ?? null,
-                'isbn' => $variant['sku'] ?? null,
-                'price' => $variant['price'] ?? 0,
-                'inventory_quantity' => $variant['inventoryQuantity'] ?? 0,
+                'isbn' => $shopifyProduct['sku'] ?? null,
+                'price' => $shopifyProduct['price'] ?? 0,
+                'inventory_quantity' => $shopifyProduct['inventoryQuantity'] ?? 0,
                 'tags' => $node['tags'] ?? [],
                 'data' => [
                     'description' => $node['descriptionHtml'] ?? null,
@@ -104,7 +102,6 @@ class ProductSyncService
             ]
         );
 
-        // Categoria: deriva da productType, collega via pivot
         $this->syncCategory($product, $node['productType'] ?? null);
     }
 
@@ -113,7 +110,7 @@ class ProductSyncService
      */
     private function syncCategory(Product $product, ?string $productType): void
     {
-        if (blank($productType)) {
+        if (empty($productType)) {
             return;
         }
 
@@ -122,14 +119,12 @@ class ProductSyncService
             ['name' => $productType]
         );
 
-        // syncWithoutDetaching: aggiunge il legame senza rimuovere altre categorie
         $product->categories()->syncWithoutDetaching([$category->id]);
     }
 
     private function mapStatus(string $shopifyStatus): string
     {
         return match (strtoupper($shopifyStatus)) {
-            'ACTIVE' => 'active',
             'DRAFT' => 'draft',
             'ARCHIVED' => 'archived',
             default => 'active',

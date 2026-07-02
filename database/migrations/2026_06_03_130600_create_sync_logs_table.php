@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('finished_at')->nullable();
-            $table->unsignedInteger('duration_seconds')->nullable();
+            $table->unsignedBigInteger('duration_seconds')->nullable();
             $table->timestamps();
 
             $table->index('status');

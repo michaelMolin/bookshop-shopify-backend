@@ -39,7 +39,7 @@ class ShopifyAdminService
             throw new RuntimeException('Shopify Admin API ha restituito errori GraphQL.');
         }
 
-        // Errori a livello utente (es. validazione mutation)
+        // Errori a livello utente
         $userErrors = $body['data'][array_key_first($body['data'] ?? [])]['userErrors'] ?? null;
         if (! empty($userErrors)) {
             Log::warning('Shopify Admin userErrors', ['userErrors' => $userErrors]);
