@@ -5,6 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Shopify\Context;
 use Shopify\Auth\FileSessionStorage;
+use App\Shopify\Handlers\ProductWebhookHandler;
+use Shopify\Webhooks\Registry;
+use Shopify\Webhooks\Topics;
 
 class ShopifyContextProvider extends ServiceProvider
 {
@@ -18,7 +21,12 @@ class ShopifyContextProvider extends ServiceProvider
             sessionStorage: new FileSessionStorage(storage_path('shopify_sessions')),
             apiVersion: config('shopify.api_version'),
             isEmbeddedApp: false,
-            isPrivateApp: false,
         );
+
+        $productHandler = new ProductWebhookHandler();
+
+        Registry::addHandler(Topics::PRODUCTS_CREATE, $productHandler);
+        Registry::addHandler(Topics::PRODUCTS_UPDATE, $productHandler);
+        Registry::addHandler(Topics::PRODUCTS_DELETE, $productHandler);
     }
 }
