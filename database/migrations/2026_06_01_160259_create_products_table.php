@@ -12,8 +12,8 @@ return new class extends Migration
             Schema::create('products', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('id_shopify')->unique();
-                $table->string('title');
-                $table->string('slug')->unique();
+                $table->json('title');
+                $table->json('slug')->unique();
                 $table->string('publisher')->nullable();
                 $table->string('isbn')->nullable()->index();
                 $table->decimal('price', 10, 2)->default(0);

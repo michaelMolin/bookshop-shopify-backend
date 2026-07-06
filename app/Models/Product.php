@@ -5,9 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Spatie\Translatable\Attributes\Translatable;
+use Spatie\Translatable\HasTranslations;
 
+
+#[Translatable ('name','slug','book_data')]
 class Product extends Model
 {
+    use HasTranslations;
+
     protected $guarded = ['id'];
     protected $casts = [
         'tags' => 'array',
@@ -16,11 +22,6 @@ class Product extends Model
         'inventory_quantity' => 'integer',
         'synced_at' => 'datetime',
     ];
-
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
-    }
 
     // RELATIONSHIP
 
