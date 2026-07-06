@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Spatie\Translatable\Attributes\Translatable;
 use Spatie\Translatable\HasTranslations;
+use Spatie\Sluggable\Attributes\Sluggable;
 
 
-#[Translatable ('name','slug','book_data')]
+
+#[Translatable ('name','slug','book_data'), Sluggable(from:'title', to: 'slug', selfHealing: true)]
 class Product extends Model
 {
     use HasTranslations;
