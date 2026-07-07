@@ -11,10 +11,10 @@ return new class extends Migration
         if (!Schema::hasTable('categories')) {
             Schema::create('categories', function (Blueprint $table) {
                 $table->id();
-                $table->string('name');                
-                $table->string('slug')->unique();       
-                $table->text('description')->nullable();
-                $table->string('image')->nullable(); 
+                $table->json('name');
+                $table->json('slug');
+                $table->json('description')->nullable();
+                $table->string('image')->nullable();
                 $table->unsignedInteger('sort_order')->default(0);
                 $table->boolean('is_featured')->default(false);
                 $table->timestamps();

@@ -11,7 +11,7 @@ use Spatie\Sluggable\Attributes\Sluggable;
 
 
 
-#[Translatable ('name','slug','book_data'), Sluggable(from:'title', to: 'slug', selfHealing: true)]
+#[Translatable ('title','slug','book_data'), Sluggable(from:'title', to: 'slug', selfHealing: true)]
 class Product extends Model
 {
     use HasTranslations;
@@ -19,7 +19,7 @@ class Product extends Model
     protected $guarded = ['id'];
     protected $casts = [
         'tags' => 'array',
-        'data' => 'array',
+        'book_data' => 'array',
         'price' => 'decimal:2',
         'inventory_quantity' => 'integer',
         'synced_at' => 'datetime',

@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\SyncLog;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 readonly class ProductSyncService
 {
@@ -14,9 +15,14 @@ readonly class ProductSyncService
         private ShopifyAdminService $admin,
     ) {}
 
-
-    public function syncAll(): SyncLog
+    /**
+     * Sincronizza tutti i prodotti da Shopify per la locale indicata.
+     * Chiamare una volta per ogni locale supportata per popolare tutte le traduzioni.
+     */
+    public function syncAll(string $locale = ''): SyncLog
     {
+        $locale = $locale ?: config('app.locale', 'it');
+
         $log = SyncLog::create([
             'type' => 'products',
             'status' => 'running',
@@ -36,7 +42,7 @@ readonly class ProductSyncService
 
                 foreach ($edges as $edge) {
                     try {
-                        $this->syncOne($edge['node']);
+                        $this->syncOne($edge['node'], $locale);
                         $processed++;
                     } catch (Throwable $e) {
                         $failed++;
@@ -76,31 +82,51 @@ readonly class ProductSyncService
     }
 
     /**
-     * Mappa e salva un singolo prodotto Shopify
+     * Entry point per i webhook: sincronizza un singolo nodo prodotto
+     * nella locale specificata (default: locale dell'app).
      */
-    private function syncOne(array $node): void
+    public function syncFromWebhook(array $node, string $locale = ''): void
+    {
+        $locale = $locale ?: config('app.locale', 'it');
+        $this->syncOne($node, $locale);
+    }
+
+    /**
+     * Mappa e salva un singolo prodotto Shopify.
+     *
+     * I campi scalari (price, isbn, ecc.) vengono aggiornati a ogni sync.
+     * I campi tradotti (title, slug, book_data) vengono impostati per la locale
+     * corrente senza sovrascrivere le altre lingue già salvate.
+     */
+    private function syncOne(array $node, string $locale): void
     {
         // L'id Shopify arriva come GID, esempio: "gid://shopify/Product/123456"
         $shopifyId = (int) Str::afterLast($node['id'], '/');
 
-        $shopifyProduct = $node['variants']['edges'][0]['node'] ?? [];
+        $shopifyVariant = $node['variants']['edges'][0]['node'] ?? [];
+
+        // Campi scalari (non tradotti): aggiornati indipendentemente dalla locale
         $product = Product::updateOrCreate(
             ['id_shopify' => $shopifyId],
             [
-                'title' => $node['title'],
-                'slug' => $node['handle'],
                 'publisher' => $node['vendor'] ?? null,
-                'isbn' => $shopifyProduct['sku'] ?? null,
-                'price' => $shopifyProduct['price'] ?? 0,
-                'inventory_quantity' => $shopifyProduct['inventoryQuantity'] ?? 0,
+                'isbn' => $shopifyVariant['sku'] ?? null,
+                'price' => $shopifyVariant['price'] ?? 0,
+                'inventory_quantity' => $shopifyVariant['inventoryQuantity'] ?? 0,
                 'tags' => $node['tags'] ?? [],
-                'data' => [
-                    'description' => $node['descriptionHtml'] ?? null,
-                ],
                 'status' => $this->mapStatus($node['status'] ?? 'ACTIVE'),
                 'synced_at' => now(),
             ]
         );
+
+        // Campi tradotti: salvati per la locale corrente, le altre rimangono intatte
+        $product
+            ->setTranslation('title', $locale, $node['title'])
+            ->setTranslation('slug', $locale, $node['handle'])
+            ->setTranslation('book_data', $locale, [
+                'description' => $node['descriptionHtml'] ?? null,
+            ])
+            ->save();
 
         $this->syncCategory($product, $node['productType'] ?? null);
     }

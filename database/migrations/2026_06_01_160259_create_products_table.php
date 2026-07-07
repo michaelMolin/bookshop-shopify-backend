@@ -13,7 +13,7 @@ return new class extends Migration
                 $table->id();
                 $table->unsignedBigInteger('id_shopify')->unique();
                 $table->json('title');
-                $table->json('slug')->unique();
+                $table->json('slug');
                 $table->string('publisher')->nullable();
                 $table->string('isbn')->nullable()->index();
                 $table->decimal('price', 10, 2)->default(0);
